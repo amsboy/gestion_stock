@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Produits | BazarByte StockMaster</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="dist/output.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+</head>
+
+<script>
+    function loadProducts() {
+        fetch("get_products.php")
+            .then(response => response.json())
+            .then(data => {
+                const tableBody = document.getElementById("productsTableBody");
+                tableBody.innerHTML = "";
+
+                data.forEach(product => {
+                    const row = `
+                    <tr>
+                        <td class="px-4 py-2">${product.name}</td>
+                        <td class="px-4 py-2">${product.category}</td>
+                        <td class="px-4 py-2">${product.purchase_price}</td>
+                        <td class="px-4 py-2">${product.sale_price}</td>
+                        <td class="px-4 py-2">${product.stock}</td>
+                        <td class="px-4 py-2">
+                            <button 
+                                onclick="openPurchaseModal(${product.id}, '${product.name}')"
+                                class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                Réapprovisionner
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                    tableBody.innerHTML += row;
+                });
+            });
+    }
+
+    window.onload = loadProducts;
+</script>
+
+<body class="bg-gray-100">
+    <custom-navbar></custom-navbar>
+    <script src="components/navbar.js"></script>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-2xl font-bold text-gray-800">Gestion des Produits</h1>
+            <button onclick="openAddProductModal()"
+                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center">
+                <i data-feather="plus" class="mr-2"></i> Ajouter un produit
+            </button>
+        </div>
+
+        <div class="mb-4 flex items-center gap-3">
+            <input id="tableSearch" type="text" placeholder="Rechercher un produit, catégorie..."
+                class="w-full max-w-md px-3 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary">
+            <span class="text-sm text-gray-500">Filtre instantané</span>
+        </div>
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="overflow-x-auto">
+                <table
+                    class="min-w-full divide-y divide-gray-200 bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden" id="productsTable">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Nom</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Catégorie</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Prix d'achat</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Prix de vente</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Stock</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="productsTableBody">
+                        <tr>
+                            <td colspan="6" class="px-6 py-4 text-center text-gray-500">Aucun produit enregistré</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Product Modal -->
+    <div id="addProductModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">Ajouter un produit</h3>
+                <button onclick="closeAddProductModal()" class="text-gray-500 hover:text-gray-700">
+                    <i data-feather="x"></i>
+                </button>
+            </div>
+
+            <form id="addProductForm" onsubmit="return validateProductForm()" action="add_product.php" method="POST">
+                <div class="mb-4">
+                    <label for="productName" class="block text-sm font-medium text-gray-700 mb-1">Nom du
+                        produit*</label>
+                    <input type="text" id="productName" name="name"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
+                </div>
+
+                <div class="mb-4">
+                    <label for="productCategory" class="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
+                    <select id="productCategory" name="category"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                        <option value="informatique">Informatique</option>
+                        <option value="accessoires">Accessoires</option>
+                        <option value="composants">Composants</option>
+                        <option value="logiciels">Logiciels</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="purchasePrice" class="block text-sm font-medium text-gray-700 mb-1">Prix
+                            d'achat*</label>
+                        <input type="number" step="0.01" id="purchasePrice" name="purchase_price"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
+                    </div>
+
+                    <div>
+                        <label for="sellingPrice" class="block text-sm font-medium text-gray-700 mb-1">Prix de
+                            vente*</label>
+                        <input type="number" step="0.01" id="sellingPrice" name="sale_price"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="initialStock" class="block text-sm font-medium text-gray-700 mb-1">Stock
+                        initial*</label>
+                    <input type="number" id="initialStock" name="stock"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
+                </div>
+
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="closeAddProductModal()"
+                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700">Annuler</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Purchase Modal -->
+    <div id="purchaseModal" class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+            <h2 class="text-lg font-semibold mb-4">Réapprovisionner</h2>
+
+            <input type="hidden" id="purchaseProductId">
+
+            <div class="mb-3">
+                <label class="text-sm text-gray-600">Produit</label>
+                <div id="purchaseProductName" class="font-medium"></div>
+            </div>
+
+            <div class="mb-3">
+                <label class="text-sm text-gray-600">Quantité ajoutée</label>
+                <input type="number" id="purchaseQuantity" class="w-full border rounded px-3 py-2">
+            </div>
+
+            <div class="mb-3">
+                <label class="text-sm text-gray-600">Prix d'achat unitaire (FCFA)</label>
+                <input type="number" id="purchasePriceInput" class="w-full border rounded px-3 py-2">
+            </div>
+
+            <div class="flex justify-end space-x-3">
+                <button onclick="closePurchaseModal()" class="px-4 py-2 bg-gray-300 rounded">Annuler</button>
+                <button onclick="submitPurchase()" class="px-4 py-2 bg-blue-600 text-white rounded">Valider</button>
+            </div>
+        </div>
+    </div>
+
+    <custom-footer></custom-footer>
+    <script src="components/footer.js"></script>
+    <script src="script.js"></script>
+    <script>
+        function openAddProductModal() {
+            document.getElementById('addProductModal').classList.remove('hidden');
+        }
+
+        function closeAddProductModal() {
+            document.getElementById('addProductModal').classList.add('hidden');
+        }
+
+        function openPurchaseModal(id, name) {
+            document.getElementById("purchaseProductId").value = id;
+            document.getElementById("purchaseProductName").innerText = name;
+            document.getElementById("purchaseModal").classList.remove("hidden");
+        }
+
+        function closePurchaseModal() {
+            document.getElementById("purchaseModal").classList.add("hidden");
+        }
+
+        function submitPurchase() {
+            let id = document.getElementById("purchaseProductId").value;
+            let qty = document.getElementById("purchaseQuantity").value;
+            let price = document.getElementById("purchasePriceInput").value;
+
+            fetch("add_purchase.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: `product_id=${id}&quantity=${qty}&purchase_price=${price}`
+            })
+                .then(res => res.text())
+                .then(data => {
+                    if (data === "success") {
+                        alert("Réapprovisionnement effectué !");
+                        closePurchaseModal();
+                        location.reload();
+                    }
+                });
+        }
+
+        document.getElementById("addProductForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+
+            fetch("add_product.php", {
+                method: "POST",
+                body: formData
+            })
+                .then(response => response.text())
+                .then(result => {
+                    if (result === "success") {
+                        alert("Produit ajouté avec succès");
+                        closeAddProductModal();
+                        loadProducts(); // recharge la liste sans refresh
+                    } else {
+                        alert("Erreur lors de l'ajout du produit");
+                    }
+                });
+        });
+        function loadProducts() {
+            fetch("get_products.php")
+                .then(res => res.json())
+                .then(data => {
+                    const tableBody = document.getElementById("productsTableBody");
+                    tableBody.innerHTML = "";
+                    data.forEach(product => {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                    <td>${product.name}</td>
+                    <td>${product.category}</td>
+                    <td>${product.purchase_price}</td>
+                    <td>${product.sale_price}</td>
+                    <td>${product.stock}</td>
+                    <td>
+                        <button onclick="openPurchaseModal(${product.id}, '${product.name}')">
+                            Réapprovisionner
+                        </button>
+                    </td>
+                `;
+                        tableBody.appendChild(tr);
+                    });
+                });
+        }
+
+    </script>
+    <script>
+        const searchInput = document.getElementById('tableSearch');
+        const table = document.getElementById('productsTable');
+        const rows = () => Array.from(table.querySelectorAll('tbody tr'));
+
+        function filterRows(query) {
+            const q = query.trim().toLowerCase();
+            rows().forEach(tr => {
+                const text = tr.textContent.toLowerCase();
+                tr.style.display = text.includes(q) ? '' : 'none';
+            });
+        }
+
+        searchInput.addEventListener('input', (e) => filterRows(e.target.value));
+    </script>
+    <script>feather.replace();</script>
+</body>
+
+</html>

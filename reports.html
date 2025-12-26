@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapports | BazarByte StockMaster</title>
+    <link href="dist/output.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+</head>
+
+<body class="bg-gray-100">
+    <custom-navbar></custom-navbar>
+    <script src="components/navbar.js"></script>
+
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-2xl font-bold text-gray-800 mb-8">Rapports et Statistiques</h1>
+
+        <!-- Cartes Hebdo + Mensuel -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+
+            <!-- Rapport Hebdomadaire -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Rapport hebdomadaire</h3>
+
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-sm text-gray-500">
+                        Semaine du <span id="weekStartDate"></span> au <span id="weekEndDate"></span>
+                    </span>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span>Total des ventes:</span>
+                        <span id="weeklyTotalSales" class="font-medium">0 FCFA</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Bénéfice estimé:</span>
+                        <span id="weeklyEstimatedProfit" class="font-medium">0 FCFA</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Produits vendus:</span>
+                        <span id="weeklyProductsSold" class="font-medium">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rapport Mensuel -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Rapport mensuel</h3>
+
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-sm text-gray-500">Mois de <span id="currentMonth"></span></span>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span>Total des ventes:</span>
+                        <span id="monthlyTotalSales" class="font-medium">0 FCFA</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Bénéfice estimé:</span>
+                        <span id="monthlyEstimatedProfit" class="font-medium">0 FCFA</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Produits vendus:</span>
+                        <span id="monthlyProductsSold" class="font-medium">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Produits les plus vendus -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Produits les plus vendus (ce mois)</h3>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Produit</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Quantité vendue</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Total des ventes</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="topProductsBody" class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td colspan="3" class="px-6 py-4 text-center text-gray-500">
+                                Aucune donnée disponible
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Valeur du Stock -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Valeur du stock actuel</h3>
+
+            <div class="flex items-center justify-between">
+                <div>
+                    <p id="stockPurchaseValue" class="text-3xl font-bold text-blue-600">0 FCFA</p>
+                    <p class="text-sm text-gray-500">Basé sur les prix d'achat</p>
+                </div>
+
+                <div>
+                    <p id="stockSaleValue" class="text-3xl font-bold text-green-600">0 FCFA</p>
+                    <p class="text-sm text-gray-500">Basé sur les prix de vente</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <custom-footer></custom-footer>
+    <script src="components/footer.js"></script>
+
+    <script>
+        // Format FCFA
+        function formatFCFA(value) {
+            return new Intl.NumberFormat('fr-FR').format(value) + " FCFA";
+        }
+
+        // Charger rapport hebdomadaire
+        function loadWeeklyReport() {
+            fetch("get_weekly_report.php")
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById("weeklyTotalSales").textContent = formatFCFA(data.total_sales);
+                    document.getElementById("weeklyEstimatedProfit").textContent = formatFCFA(data.estimated_profit);
+                    document.getElementById("weeklyProductsSold").textContent = data.products_sold;
+
+                    document.getElementById("weekStartDate").textContent =
+                        new Date(data.week_start).toLocaleDateString("fr-FR");
+
+                    document.getElementById("weekEndDate").textContent =
+                        new Date(data.week_end).toLocaleDateString("fr-FR");
+                });
+        }
+
+        // Charger rapport mensuel
+        function loadMonthlyReport() {
+            fetch("get_monthly_report.php")
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById("monthlyTotalSales").textContent = formatFCFA(data.total_sales);
+                    document.getElementById("monthlyEstimatedProfit").textContent = formatFCFA(data.estimated_profit);
+                    document.getElementById("monthlyProductsSold").textContent = data.products_sold;
+
+                    const months = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+                    document.getElementById("currentMonth").textContent =
+                        months[data.month - 1] + " " + data.year;
+                });
+        }
+
+        // Charger top produits
+        function loadTopProducts() {
+            fetch("get_top_products.php")
+                .then(res => res.json())
+                .then(data => {
+                    const tbody = document.getElementById("topProductsBody");
+                    tbody.innerHTML = "";
+
+                    if (data.length === 0) {
+                        tbody.innerHTML = `
+                            <tr><td colspan="3" class="px-6 py-4 text-center text-gray-500">
+                                Aucune donnée disponible
+                            </td></tr>`;
+                        return;
+                    }
+
+                    data.forEach(item => {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td class="px-6 py-4">${item.name}</td>
+                                <td class="px-6 py-4">${item.total_quantity}</td>
+                                <td class="px-6 py-4">${formatFCFA(item.total_sales)}</td>
+                            </tr>
+                        `;
+                    });
+                });
+        }
+
+        // Charger valeur du stock
+        function loadStockValue() {
+            fetch("get_stock_value.php")
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById("stockPurchaseValue").textContent = formatFCFA(data.purchase_value);
+                    document.getElementById("stockSaleValue").textContent = formatFCFA(data.sale_value);
+                });
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadWeeklyReport();
+            loadMonthlyReport();
+            loadTopProducts();
+            loadStockValue();
+            feather.replace();
+        });
+    </script>
+    
+</body>
+
+</html>

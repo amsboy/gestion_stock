@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enregistrement des Ventes | BazarByte StockMaster</title>
+    <link href="dist/output.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+</head>
+
+<body class="bg-gray-100">
+    <custom-navbar></custom-navbar>
+    <script src="components/navbar.js"></script>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+            <!-- FORMULAIRE DE VENTE -->
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800 mb-6">Nouvelle vente</h1>
+
+                <div class="bg-white rounded-lg shadow p-6">
+                    <form id="salesForm">
+
+                        <div class="mb-4">
+                            <label for="saleProduct" class="block text-sm font-medium text-gray-700 mb-1">Produit*</label>
+                            <select id="saleProduct" name="product_id" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
+                                <option value="">Sélectionner un produit</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="saleQuantity" class="block text-sm font-medium text-gray-700 mb-1">Quantité*</label>
+                            <input type="number" id="saleQuantity" name="quantity" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="salePrice" class="block text-sm font-medium text-gray-700 mb-1">Prix unitaire</label>
+                            <input type="number" step="0.01" id="salePrice" name="unit_price" readonly class="w-full px-3 py-2 border border-gray-300 bg-gray-100 rounded-md">
+                        </div>
+
+                        <div class="mb-6">
+                            <label for="totalPrice" class="block text-sm font-medium text-gray-700 mb-1">Total</label>
+                            <input type="number" step="0.01" id="totalPrice" name="total_price" readonly class="w-full px-3 py-2 border border-gray-300 bg-gray-100 rounded-md">
+                        </div>
+
+                        <button type="submit" class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 flex items-center justify-center">
+                            <i data-feather="shopping-cart" class="mr-2"></i> Enregistrer la vente
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- LISTE DES VENTES -->
+            <div>
+                <div class="flex justify-between items-center mb-6">
+                    <h1 class="text-2xl font-bold text-gray-800">Ventes du jour</h1>
+                    <span class="text-sm text-gray-500">Date: <span id="currentDate"></span></span>
+                </div>
+
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantité</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prix</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Heure</th>
+                                </tr>
+                            </thead>
+                            <tbody id="salesTableBody" class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td colspan="4" class="px-6 py-4 text-center text-gray-500">Aucune vente enregistrée aujourd'hui</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow mt-6 p-6">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-gray-800">Total des ventes du jour</h3>
+                        <p id="dailyTotal" class="text-2xl font-bold text-blue-600">0 FCFA</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <custom-footer></custom-footer>
+    <script src="components/footer.js"></script>
+
+    <!-- SCRIPT PRINCIPAL -->
+    <script>
+        // Charger les produits dans le select
+        function loadSaleProducts() {
+            fetch("get_products.php")
+                .then(response => response.json())
+                .then(data => {
+                    const select = document.getElementById("saleProduct");
+                    select.innerHTML = '<option value="">Sélectionner un produit</option>';
+
+                    data.forEach(product => {
+                        const option = document.createElement("option");
+                        option.value = product.id;
+                        option.textContent = product.name;
+                        option.dataset.price = product.sale_price;
+                        select.appendChild(option);
+                    });
+                });
+        }
+
+        // Charger les ventes du jour
+        function loadTodaySales() {
+            fetch("get_sales.php")
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.getElementById("salesTableBody");
+                    tbody.innerHTML = "";
+
+                    if (data.length === 0) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="4" class="px-6 py-4 text-center text-gray-500">
+                                    Aucune vente enregistrée aujourd'hui
+                                </td>
+                            </tr>
+                        `;
+                        document.getElementById("dailyTotal").textContent = "0 FCFA";
+                        return;
+                    }
+
+                    let total = 0;
+
+                    data.forEach(sale => {
+                        total += parseFloat(sale.total_price);
+
+                        const row = `
+                            <tr>
+                                <td class="px-6 py-4">${sale.name}</td>
+                                <td class="px-6 py-4">${sale.quantity}</td>
+                                <td class="px-6 py-4">${sale.total_price} FCFA</td>
+                                <td class="px-6 py-4">${sale.created_at.substring(11, 16)}</td>
+                            </tr>
+                        `;
+                        tbody.innerHTML += row;
+                    });
+
+                    document.getElementById("dailyTotal").textContent = total + " FCFA";
+                });
+        }
+
+        // Enregistrement AJAX de la vente
+        document.getElementById("salesForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+
+            fetch("add_sale.php", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.text())
+            .then(result => {
+                if (result === "success") {
+                    alert("Vente enregistrée avec succès !");
+                    loadTodaySales();
+                    this.reset();
+                    document.getElementById("salePrice").value = "";
+                    document.getElementById("totalPrice").value = "";
+                } else if (result === "not_enough_stock") {
+                    alert("Stock insuffisant !");
+                } else {
+                    alert("Erreur lors de l'enregistrement.");
+                }
+            });
+        });
+
+        // Mise à jour du prix et du total
+        window.onload = function () {
+            loadSaleProducts();
+            loadTodaySales();
+
+            const saleProduct = document.getElementById("saleProduct");
+            const saleQuantity = document.getElementById("saleQuantity");
+            const salePrice = document.getElementById("salePrice");
+            const totalPrice = document.getElementById("totalPrice");
+
+            saleProduct.addEventListener("change", () => {
+                const selected = saleProduct.options[saleProduct.selectedIndex];
+                const price = selected.dataset.price || 0;
+                salePrice.value = parseFloat(price).toFixed(2);
+                calculateTotal();
+            });
+
+            saleQuantity.addEventListener("input", calculateTotal);
+
+            function calculateTotal() {
+                const qty = parseInt(saleQuantity.value) || 0;
+                const price = parseFloat(salePrice.value) || 0;
+                totalPrice.value = (qty * price).toFixed(2);
+            }
+
+            // Date du jour
+            const now = new Date();
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('fr-FR');
+        };
+
+        feather.replace();
+    </script>
+</body>
+</html>

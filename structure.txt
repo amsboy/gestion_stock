@@ -1,0 +1,38 @@
+GESTION_STOCK — Structure du projet
+
+📁 components/
+    navbar.js        → Composant barre de navigation
+    footer.js        → Composant pied de page
+
+📄 Fichiers PHP — Backend
+    config.php       → Connexion à la base de données
+    add_product.php  → Ajout d’un nouveau produit
+    update_product.php → Modification d’un produit existant
+    delete_product.php → Suppression d’un produit
+    add_stock.php    → Réapprovisionnement d’un produit
+    remove_stock.php → Retrait de stock
+    add_sale.php     → Enregistrement d’une vente
+    add_purchase.php → (optionnel) Ajout d’un achat fournisseur — non utilisé actuellement
+    get_products.php → Récupération de la liste des produits
+    get_stock.php    → Récupération du stock actuel
+    get_sales.php    → Récupération des ventes
+    get_recent_sales.php → Récupération des ventes récentes (dashboard)
+    get_dashboard_stats.php → Statistiques globales (KPI du dashboard)
+    get_profit_stats.php → Calcul du bénéfice estimé
+    get_stock_value.php → (optionnel) Valeur totale du stock
+    get_weekly_report.php → Rapport hebdomadaire
+    get_monthly_report.php → Rapport mensuel
+
+📄 Fichiers HTML — Frontend
+    index.html       → Tableau de bord principal
+    products.html    → Gestion des produits
+    stock.html       → Gestion du stock
+    sales.html       → Gestion des ventes
+    reports.html     → Rapports et statistiques
+
+📄 Fichiers JS/CSS — Frontend global
+    script.js        → Scripts généraux (interactions, AJAX)
+    style.css        → Styles personnalisés
+
+📄 Divers
+    README.md / structure.txt → Documentation du projet
